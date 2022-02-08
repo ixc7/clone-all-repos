@@ -2,26 +2,41 @@
 
 import { get } from 'https'
 import { spawn } from 'child_process'
+import { createInterface } from 'readline'
 
 const help = `
-  \rindex.js: clones all repos from a github user
-  \rusage: index.js <username>
+  \rget-all-repos: clones all repos from a github user
+  \rusage: get-all-repos <username>
 `
 
 const username = process.argv.slice(2).join('')
 
-process.on('exit', code => {
-  console.log(`process exited with: ${code}`)
-})
+const getInput = (msg = 'clone?') => {
+  const responses = 'Yesyes'
 
-if (!username.length) {
-  console.log(help)
-  process.exit(1)
+  const rl = createInterface({
+    input: process.stdin,
+    output: process.stdout,
+    prompt: `${msg} (y/n) ` 
+  })
+
+  return new Promise((resolve, reject) => {
+    rl.prompt()
+    rl.on('line', line => {
+      if (responses.includes(line)) {
+        resolve(true)
+      } else {
+        console.log('cancelled')
+        reject(process.exit(1))
+      }
+    })
+  })
 }
 
 const init = async () => {
   console.log(`fetching repos for user ${username}`)
-  const req = get({
+
+  get({
     host: 'api.github.com',
     path: `/users/${username}/repos`,
     headers: {
@@ -30,27 +45,47 @@ const init = async () => {
   }, res => {
     let acc = ''
     res.on('data', chunk => { acc += chunk })
-    res.on('end', () => {
+    res.on('end', async () => {
       try {
         const result = JSON.parse(acc, 0, 2)
-        for (let i = 0; i < result.length; i += 1) {
-          const  { html_url, name } = result[i]
-          try {
-            console.log(`cloning ${html_url} ( ${i} of ${result.length} )`)
-            const clone = spawn('git', ['clone', html_url, `./${username}/${name}`])
-            clone.on('exit', code => { 
-              if (code === 0) console.log(`${i} of ${result.length} complete`) 
-              else console.log(`${i} of ${result.length} exited with: ${code}`)
-            })
-          } catch (e) {
-            console.log(`error on ${html_url}:\n`, e.message)
-          }
+        const len = result.length
+        let remaining = len
+
+        if (!len) {
+          console.log('user not found')
+          process.exit(1)
+        } else if (len === 0) {
+          console.log('user has no public repos')
+          process.exit(1)
         }
-      } catch (e) {
-        console.log('error on API call:\n', e.message)
-      }
+
+        await getInput(`clone ${len} repos?`)
+
+        for (let i = 0; i < len; i += 1) {
+          const { html_url, name } = result[i]
+          try {
+            const clone = spawn('git', ['clone', html_url, `./${username}/${name}`])
+
+            clone.on('exit', code => {
+              if (code === 0) {
+                remaining -= 1
+                console.log(`cloned '${name}' ( ${remaining} left )`)
+              } else console.log(`${i} of ${result.length} exited with: ${code}`)
+            })
+          } catch (e) { console.log(`error on ${html_url}:\n`, e.message) }
+        }
+      } catch (e) { console.log('error on API call:\n', e.message) }
     })
   })
+}
+
+// process.on('exit', code => {
+  // if (code === 0) console.log('complete')
+// })
+
+if (!username.length) {
+  console.log(help)
+  process.exit(1)
 }
 
 init()
