@@ -6,10 +6,25 @@ import { createInterface } from 'readline'
 
 const help = `
   \rget-all-repos: clones all repos from a github user
-  \rusage: get-all-repos <username>
+
+  \rusage:
+  \r       \x1b[1m\x1b[38;5;32mget-all-repos\x1b[0m [expression]
+
+  \roptions:
+  \r       --help, -h: prints this message
 `
 
 const username = process.argv.slice(2).join('')
+
+if (username.includes('--help') || username.includes('-h') || !username.length) {
+  if (!username.length) {
+    console.log('\n\x1b[1m\x1b[38;5;88merror:\x1b[0m no username specified')
+    console.log(help)
+    process.exit(1)
+  }
+  console.log(help)
+  process.exit(0)
+}
 
 const getInput = (msg = 'clone?') => {
   const responses = 'Yesyes'
@@ -72,18 +87,18 @@ const init = async () => {
               if (code === 0) {
                 remaining -= 1
                 console.log(`cloned '${name}' ( ${remaining} left )`)
+
+                if (remaining < 1) {
+                  console.log('complete')
+                  process.exit(0)
+                }
               } else console.log(`${i} of ${result.length} exited with: ${code}`)
             })
-          } catch (e) { console.log(`error on ${html_url}:\n`, e.message) }
+          } catch (e) { console.log(`error cloning ${html_url}:\n`, e.message) }
         }
-      } catch (e) { console.log('error on API call:\n', e.message) }
+      } catch (e) { console.log('error on API request:\n', e.message) }
     })
   })
-}
-
-if (!username.length) {
-  console.log(help)
-  process.exit(1)
 }
 
 init()
