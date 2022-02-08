@@ -1,8 +1,11 @@
 #!/usr/bin/env node
 
+import { fork } from 'child_process'
 import tap from 'tap'
 
-import index from '../index.js'
+// const filepath = new URL('../index.js', import.meta.url).pathname
+
+// import index from '../index.js'
 
 // tap.pass('hello cruel world')
 
@@ -19,16 +22,26 @@ import index from '../index.js'
 // this is a silly test.
 // const tap = require('tap')
 // const fs = require('fs')
-// tap.test('some async stuff', childTest => {
+
+tap.test('search for nonexistent user', childTest => {
+
+  const forked = fork(new URL('../index.js', import.meta.url).pathname, ['jasksjdajfkj'])
+
+  forked.on('exit', code => {
+    console.log('got code:', code)
+    childTest.end()
+  })
+  
   // fs.readdir(__dirname, (er, files) => {
     // if (er) {
-      // throw er // tap will handle this
+      // throw er
     // }
     // childTest.match(files.join(','), /\basync\.js\b/)
     // childTest.end()
   // })
-// })
-// 
+  
+})
+
 // tap.test('this waits until after', childTest => {
   // // no asserts?  no problem!
   // // the lack of throwing means "success"
