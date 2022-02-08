@@ -28,7 +28,7 @@ if (username.includes('--help') || username.includes('-h') || !username.length) 
   process.exit(1)
 }
 
-const getUserInput = (msg = 'clone?') => {
+const getUserInput = (msg = 'clone?', streamline = false) => {
   const responses = 'Yesyes'
 
   const rl = createInterface({
@@ -38,6 +38,8 @@ const getUserInput = (msg = 'clone?') => {
   })
 
   return new Promise((resolve, reject) => {
+    if (streamline) resolve(true)
+    
     rl.prompt()
     rl.on('line', line => {
       if (responses.includes(line)) resolve(true)
@@ -49,12 +51,12 @@ const getUserInput = (msg = 'clone?') => {
   })
 }
 
-const init = async () => {
-  console.log(`fetching repos for user ${username}`)
+const init = async (user) => {
+  console.log(`fetching repos for user ${user}`)
   
   get({
     host: 'api.github.com',
-    path: `/users/${username}/repos`,
+    path: `/users/${user}/repos`,
     headers: {
       'User-agent': 'this-can-be-anything'
     }
@@ -81,18 +83,23 @@ const init = async () => {
           const { html_url, name } = result[i]
 
           try {
-            const clone = spawn('git', ['clone', html_url, `./${username}/${name}`])
+            const clone = spawn('git', ['clone', html_url, `./${user}/${name}`])
 
             clone.on('exit', code => {
-              if (code === 0) {
-                remaining -= 1
-                console.log(`cloned '${name}' ( ${remaining} left )`)
+              remaining -= 1
 
-                if (remaining < 1) {
-                  console.log('complete')
-                  process.exit(0)
-                }
-              } else console.log(`${i} of ${result.length} exited with nonzero code: ${code}`)
+              if (code === 0) {
+                console.log(`cloned '${name}' (${remaining} left)`)
+              } else if (code === 128) {
+                console.log(`${user}/${name} already exists`)
+              } else {
+                console.log(`${i} of ${result.length} exited with nonzero code: ${code}`)
+              }
+
+              if (remaining < 1) {
+                console.log('complete')
+                process.exit(0)
+              }
             })
 
           } catch (e) { console.log(`error running git clone on ${html_url}:\n`, e.message) }
@@ -103,4 +110,4 @@ const init = async () => {
   })
 }
 
-init()
+init(username)
