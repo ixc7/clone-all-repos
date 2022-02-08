@@ -6,7 +6,7 @@
   "license": "MIT",
   "scripts": {
     "lint": "standard --fix",
-    "test": "tap --no-coverage"
+    "test": "./test/index.js"
   },
   "devDependencies": {
     "standard": "^16.0.4",
