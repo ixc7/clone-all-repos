@@ -17,15 +17,14 @@ const getInput = (msg = 'clone?') => {
   const rl = createInterface({
     input: process.stdin,
     output: process.stdout,
-    prompt: `${msg} (y/n) ` 
+    prompt: `${msg} (y/n) `
   })
 
   return new Promise((resolve, reject) => {
     rl.prompt()
     rl.on('line', line => {
-      if (responses.includes(line)) {
-        resolve(true)
-      } else {
+      if (responses.includes(line)) resolve(true)
+      else {
         console.log('cancelled')
         reject(process.exit(1))
       }
@@ -44,7 +43,9 @@ const init = async () => {
     }
   }, res => {
     let acc = ''
+
     res.on('data', chunk => { acc += chunk })
+
     res.on('end', async () => {
       try {
         const result = JSON.parse(acc, 0, 2)
@@ -63,6 +64,7 @@ const init = async () => {
 
         for (let i = 0; i < len; i += 1) {
           const { html_url, name } = result[i]
+
           try {
             const clone = spawn('git', ['clone', html_url, `./${username}/${name}`])
 
@@ -78,10 +80,6 @@ const init = async () => {
     })
   })
 }
-
-// process.on('exit', code => {
-  // if (code === 0) console.log('complete')
-// })
 
 if (!username.length) {
   console.log(help)
