@@ -1,9 +1,13 @@
 {
-  "name": "get-all-repos",
-  "version": "0.0.1",
+  "name": "clone-all-repos",
+  "version": "0.0.0",
   "type": "module",
   "main": "index.js",
   "license": "MIT",
+  "bin": {
+    "git-all": "./index.js",
+    "clone-all": "./index.js"
+  },
   "scripts": {
     "lint": "standard --fix",
     "test": "./test/index.js"
@@ -11,5 +15,15 @@
   "devDependencies": {
     "standard": "^16.0.4",
     "tap": "^15.1.6"
-  }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:ixc7/clone-all-repos.git"
+  },
+  "publishConfig": {
+    "ixc7:registry":"https://npm.pkg.github.com"
+  },
+  "description": "Clones all public repositories from a GitHub user",
+  "homepage": "https://github.com/ixc7/clone-all-repos#readme",
+  "keywords": [ "github", "git", "git-clone", "repositories", "cli" ]
 }
