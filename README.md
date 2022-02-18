@@ -36,3 +36,9 @@ Options:
 --help, -h: print this text and exit
 --version, -v: print version and exit (0.0.2)
 ```
+
+---
+
+### Demo
+
+[![asciicast](https://asciinema.org/a/469920.svg)](https://asciinema.org/a/469920)
