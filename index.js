@@ -4,15 +4,17 @@ import { get } from 'https'
 import { spawn } from 'child_process'
 import { createInterface } from 'readline'
 
+const version = "0.0.2"
+
 const help = `
-  \rgit-all, clone-all: clones all public repositories from a GitHub user
+  \rgitall, git-all, clone-all: clones all public repositories from a GitHub user
 
   \rusage:
-  \r       \x1b[1m\x1b[38;5;32mgit-all\x1b[0m|\x1b[1m\x1b[38;5;32mclone-all\x1b[0m [username]
+  \r       \x1b[1m\x1b[38;5;32mgitall\x1b[0m|\x1b[1m\x1b[38;5;32mgit-all\x1b[0m|\x1b[1m\x1b[38;5;32mclone-all\x1b[0m [username]
 
   \roptions:
   \r       --help, -h: print this text and exit
-  \r       --version, -v: print version and exit (0.0.2)
+  \r       --version, -v: print version and exit (${version})
   
 `
 
@@ -31,12 +33,11 @@ if (username.includes('--help') || username.includes('-h') || !username.length) 
 }
 
 if (username.includes('--version') || username.includes('-v')) {
-  console.log('0.0.2')
+  console.log(version)
   process.exit(0)
 }
 
 const getUserInput = (msg = 'Clone all repos?') => {
-  // streamline: bool (default = false)
   const responses = 'Yesyes'
 
   const rl = createInterface({
@@ -46,7 +47,6 @@ const getUserInput = (msg = 'Clone all repos?') => {
   })
 
   return new Promise((resolve, reject) => {
-    // if (streamline) resolve(true)
     rl.prompt()
 
     rl.on('line', line => {
@@ -79,12 +79,10 @@ const init = async (user) => {
         let remaining = len
 
         if (!len) {
-          let msg = 'User not found'
-          if (len === 0) msg = 'User has no public repos'
-          console.log(msg)
+        console.log((len === 0) ? 'User not found' : 'User has no public repos')
           process.exit(1)
         }
-
+        
         await getUserInput(`Clone \x1b[1m\x1b[38;5;49m${len}\x1b[0m repos?`)
 
         for (let i = 0; i < len; i += 1) {
@@ -94,16 +92,11 @@ const init = async (user) => {
             const clone = spawn('git', ['clone', html_url, `./${user}/${name}`])
 
             clone.on('exit', code => {
+              if (code === 0) console.log(`Cloned '${name}' (${remaining} left)`)
+              else if (code === 128) console.log(`${user}/${name} already exists`)
+              else console.log(`${i} of ${result.length} exited with nonzero code: ${code}`)
+
               remaining -= 1
-
-              if (code === 0) {
-                console.log(`Cloned '${name}' (${remaining} left)`)
-              } else if (code === 128) {
-                console.log(`${user}/${name} already exists`)
-              } else {
-                console.log(`${i} of ${result.length} exited with nonzero code: ${code}`)
-              }
-
               if (remaining < 1) {
                 console.log('Complete')
                 process.exit(0)
